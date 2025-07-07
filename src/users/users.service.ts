@@ -1,13 +1,15 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './entities/user.entity';
 import mongoose, { isValidObjectId, Model } from 'mongoose';
+import { Post } from 'src/posts/entities/post.entity';
+import { PostsService } from 'src/posts/posts.service';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name) private userModel:Model<User>){}
+  constructor(@InjectModel(User.name) private userModel:Model<User>,@Inject(forwardRef(() => PostsService)) private postsService:PostsService){}
  async create(createUserDto: CreateUserDto) {
   const existUser = await this.userModel.findOne({email:createUserDto.email})
   if(existUser) throw new BadRequestException("email already exists")
@@ -16,7 +18,7 @@ export class UsersService {
   }
 
  async findAll() {
-    return this.userModel.find()
+    return this.userModel.find().populate("posts")
   }
 
 
@@ -41,6 +43,8 @@ export class UsersService {
 
  async remove(id: mongoose.Schema.Types.ObjectId) {
     const deletedUser = await this.userModel.findByIdAndDelete(id)
+    if(!deletedUser) throw new BadRequestException("user not found")
+      await this.postsService.removePostsByUserId(id)
     return deletedUser
   }
 

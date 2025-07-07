@@ -18,7 +18,7 @@ export class UsersController {
 
   @Get()
   findAll() {
-    return this.usersService.findAll();
+    return this.usersService.findAll()
   }
 
   @Get(':id')
@@ -39,7 +39,7 @@ export class UsersController {
   }
 
   @Delete(":id")
-  @UseGuards(AuthGuard,IsAdmin)
+  @UseGuards(AuthGuard)
   rmeoveOtherUser(@Param() params:isValidObjectId){
    return this.usersService.remove(params.id);
   }
